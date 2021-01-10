@@ -3,6 +3,10 @@ const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const webpackBundleAnalyzer = require('webpack-bundle-analyzer');
+const BrotliPlugin = require('brotli-webpack-plugin');
+const TerserPlugin = require('terser-webpack-plugin');
+const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin');
+
 
 process.env.NODE_ENV = 'production';
 
@@ -22,6 +26,13 @@ module.exports = {
 
     new MiniCssExtractPlugin({
       filename: '[name].[contenthash].css',
+    }),
+
+    new BrotliPlugin({
+      asset: '[path].br[query]',
+      test: /\.(js|css|html|svg)$/,
+      threshold: 10240,
+      minRatio: 0.8
     }),
 
     new webpack.DefinePlugin({
@@ -47,6 +58,31 @@ module.exports = {
       },
     }),
   ],
+  optimization: {
+    minimizer: [
+      new TerserPlugin({
+        terserOptions: {
+          output: {
+            comments: false,
+          },
+          compress: {
+            drop_console: true,
+          }
+        }
+      }),
+      new OptimizeCSSAssetsPlugin({}),
+    ],
+    splitChunks: {
+      cacheGroups: {
+        commons: {
+          test: /[\\/]node_modules[\\/]/,
+          name: 'vendors',
+          chunks: 'all',
+          enforce: true
+        }
+      }
+    },
+  },
   module: {
     rules: [
       {
@@ -71,7 +107,7 @@ module.exports = {
               sourceMap: true,
             },
           },
-        ], 
+        ],
       },
     ],
   },
